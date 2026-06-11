@@ -151,7 +151,8 @@ pytest -v
 |------|--------|
 | `test_nested_chapters` | Chapter hierarchy (`parent_id`) |
 | `test_chapter_cannot_be_own_ancestor` | Cycle prevention |
-| `test_provider_cannot_access_other_providers_course` | Cross-tenant isolation via RLS |
+| `test_provider_cannot_access_other_providers_course` | Cross-tenant isolation at course level |
+| `test_provider_cannot_access_other_providers_lesson_video` | Cross-tenant isolation at lesson/video level |
 
 After each test, tenant tables are truncated for isolation within the session.
 
@@ -166,14 +167,17 @@ After each test, tenant tables are truncated for isolation within the session.
 | Video metadata fields | `LessonVideo` model (`title`, `description`, `file_id`, `subtitle_text`) |
 | CRUD API | `routes/` for all resources |
 | Input validation / errors | Pydantic schemas; 404, 400, 409, 422 |
-| 2–3 tests | 3 integration tests in `tests/` |
+| 2–3 tests | 4 integration tests in `tests/` |
 | README | this file |
 
 ## Assumptions / simplifications
 
-- **No authentication** — any client can pass any `provider_id`; RLS enforces data access, not caller identity.
+- **No authentication** — any client can pass any `provider_id` in the URL; RLS enforces *data access*, not *caller identity*. A request to `/providers/{provider_b}/…` sets `app.current_provider_id` to B, so Provider B only sees B's rows regardless of which IDs appear in the path. In production, authentication would derive the tenant from a JWT or session and set that session variable server-side — the path would not be the source of truth for tenancy.
 - **Provider list is open** — `GET /providers` returns all providers (by design for discovery).
 - **No explicit `provider_id` in every CRUD query** — tenant isolation relies on RLS when connected as `course_app`.
+- **Denormalized `provider_id` without cross-table DB checks** — each tenant-owned row carries `provider_id` for RLS policies. There is no database constraint ensuring e.g. `chapters.provider_id` matches the parent course's `provider_id`; consistency is enforced by the application always writing the path's `provider_id` and by RLS filtering reads. A trigger or composite foreign key could harden this in production.
+- **Subtitle searchability is modeled, not implemented** — `subtitle_text` is stored as PostgreSQL `TEXT` (not `VARCHAR`) so it can grow and map cleanly to full-text search later (e.g. a generated `tsvector` column and GIN index). No search endpoint or index is added; the schema choice is the deliberate hook for a future feature.
+- **Video metadata has no list endpoint** — each lesson has at most one video metadata record (1:1, enforced by a unique constraint on `lesson_id`). The API exposes a singular resource at `…/lessons/{lesson_id}/video` (GET / POST / PATCH / DELETE) rather than a collection URL, since listing would always return zero or one item.
 - **Video `file_id`** is an opaque string reference to external storage (not implemented).
 
 ## Deliberately out of scope
