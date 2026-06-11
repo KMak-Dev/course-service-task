@@ -21,6 +21,7 @@ async def create_chapter(
             course_id=course_id,
             parent_id=data.parent_id,
             title=data.title,
+            description=data.description,
             sort_order=data.sort_order,
         )
         .returning(Chapter)
