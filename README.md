@@ -15,11 +15,11 @@ Backend foundation for a **multi-tenant online course platform**: providers mana
 ## Architecture
 
 ```
-routes/    → HTTP handlers (Pydantic in/out, Depends for DB sessions)
-crud/      → database access (select / insert / update / delete)
-models/    → SQLAlchemy ORM models
-schemas/   → Pydantic request/response models
-database/  → engine, session dependencies, app-role bootstrap
+app/routes/    → HTTP handlers (Pydantic in/out, Depends for DB sessions)
+app/crud/      → database access (select / insert / update / delete)
+app/models/    → SQLAlchemy ORM models
+app/schemas/   → Pydantic request/response models
+app/database/  → engine, session dependencies, app-role bootstrap
 ```
 
 **Request flow:** route → CRUD → PostgreSQL. Tenant-scoped routes inject a DB session that sets `app.current_provider_id`; RLS policies filter rows automatically.
@@ -78,7 +78,7 @@ In a multi-tenant system, application bugs or forgotten `WHERE` clauses can leak
 | `course` | DB owner — migrations only (`ADMIN_DATABASE_URL`) | bypasses RLS (superuser) |
 | `course_app` | Application runtime (`DATABASE_URL`) | **enforced** (`NOBYPASSRLS`) |
 
-`database/bootstrap.py` creates `course_app` and grants table privileges. Docker entrypoint and tests both use this setup so **runtime behavior matches integration tests**.
+`app/database/bootstrap.py` creates `course_app` and grants table privileges. Docker entrypoint and tests both use this setup so **runtime behavior matches integration tests**.
 
 Provider creation (`POST /providers`) sets the session variable to the new provider's UUID before insert, satisfying the insert policy.
 
@@ -133,7 +133,7 @@ docker compose up -d db
 
 # Migrations and app role (admin connection required)
 ADMIN_DATABASE_URL=postgresql+psycopg://course:course@localhost:5432/course_service alembic upgrade head
-python -m database.bootstrap postgresql+psycopg://course:course@localhost:5432/course_service
+python -m app.database.bootstrap postgresql+psycopg://course:course@localhost:5432/course_service
 
 uvicorn app.main:app --reload   # uses DATABASE_URL=course_app from .env
 ```
@@ -162,10 +162,10 @@ After each test, tenant tables are truncated for isolation within the session.
 |-------------|----------------|
 | Multi-tenancy via `provider_id` | Column on all tenant tables + nested API paths |
 | DB-level separation | PostgreSQL RLS with `FORCE`, `course_app` runtime role |
-| Domain model (course, chapter, lesson, video) | `models/` + Alembic migrations |
+| Domain model (course, chapter, lesson, video) | `app/models/` + Alembic migrations |
 | Nested chapters | `parent_id` self-FK, cycle guard in CRUD |
 | Video metadata fields | `LessonVideo` model (`title`, `description`, `file_id`, `subtitle_text`) |
-| CRUD API | `routes/` for all resources |
+| CRUD API | `app/routes/` for all resources |
 | Input validation / errors | Pydantic schemas; 404, 400, 409, 422 |
 | 2–3 tests | 4 integration tests in `tests/` |
 | README | this file |
@@ -192,12 +192,7 @@ After each test, tenant tables are truncated for isolation within the session.
 ## Project layout
 
 ```
-app/           FastAPI application entry + settings
-routes/        HTTP routers
-crud/          Database operations
-models/        SQLAlchemy models
-schemas/       Pydantic DTOs
-database/      Session engine, tenant context, role bootstrap
+app/           Application package (entry, settings, routes, crud, models, schemas, database)
 alembic/       Schema migrations (including RLS policies)
 tests/         Integration tests (Testcontainers)
 scripts/       Docker entrypoint

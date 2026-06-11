@@ -7,11 +7,11 @@ from sqlalchemy import ForeignKey, String, Text, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from models.base import Base, TimestampMixin
+from app.models.base import Base, TimestampMixin
 
 if TYPE_CHECKING:
-    from models.chapter import Chapter
-    from models.provider import Provider
+    from app.models.chapter import Chapter
+    from app.models.provider import Provider
 
 
 class Course(Base, TimestampMixin):

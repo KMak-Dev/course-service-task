@@ -3,8 +3,8 @@ from uuid import UUID
 from sqlalchemy import delete, insert, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from models.lesson_video import LessonVideo
-from schemas.lesson_video import CreateLessonVideo, UpdateLessonVideo
+from app.models.lesson_video import LessonVideo
+from app.schemas.lesson_video import CreateLessonVideo, UpdateLessonVideo
 
 
 async def create_lesson_video(

@@ -3,8 +3,8 @@ from uuid import UUID
 from sqlalchemy import delete, insert, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from models.chapter import Chapter
-from schemas.chapter import CreateChapter, UpdateChapter
+from app.models.chapter import Chapter
+from app.schemas.chapter import CreateChapter, UpdateChapter
 
 
 async def create_chapter(

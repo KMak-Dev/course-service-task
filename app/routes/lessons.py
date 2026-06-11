@@ -3,13 +3,13 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from crud import chapter as chapter_crud
-from crud import course as course_crud
-from crud import lesson as lesson_crud
-from database.session import get_tenant_db
-from models.chapter import Chapter
-from models.lesson import Lesson
-from schemas.lesson import CreateLesson, LessonResponse, UpdateLesson
+from app.crud import chapter as chapter_crud
+from app.crud import course as course_crud
+from app.crud import lesson as lesson_crud
+from app.database.session import get_tenant_db
+from app.models.chapter import Chapter
+from app.models.lesson import Lesson
+from app.schemas.lesson import CreateLesson, LessonResponse, UpdateLesson
 
 router = APIRouter(
     prefix="/providers/{provider_id}/courses/{course_id}/chapters/{chapter_id}/lessons",

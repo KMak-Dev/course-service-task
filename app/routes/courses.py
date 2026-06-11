@@ -3,9 +3,9 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from crud import course as course_crud
-from database.session import get_tenant_db
-from schemas.course import CourseResponse, CreateCourse, UpdateCourse
+from app.crud import course as course_crud
+from app.database.session import get_tenant_db
+from app.schemas.course import CourseResponse, CreateCourse, UpdateCourse
 
 router = APIRouter(prefix="/providers/{provider_id}/courses", tags=["courses"])
 

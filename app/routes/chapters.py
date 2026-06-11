@@ -3,11 +3,11 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from crud import chapter as chapter_crud
-from crud import course as course_crud
-from database.session import get_tenant_db
-from models.chapter import Chapter
-from schemas.chapter import ChapterResponse, CreateChapter, UpdateChapter
+from app.crud import chapter as chapter_crud
+from app.crud import course as course_crud
+from app.database.session import get_tenant_db
+from app.models.chapter import Chapter
+from app.schemas.chapter import ChapterResponse, CreateChapter, UpdateChapter
 
 router = APIRouter(
     prefix="/providers/{provider_id}/courses/{course_id}/chapters",

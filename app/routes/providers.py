@@ -3,9 +3,9 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from crud import provider as provider_crud
-from database.session import get_db, get_tenant_db
-from schemas.provider import CreateProvider, ProviderResponse, UpdateProvider
+from app.crud import provider as provider_crud
+from app.database.session import get_db, get_tenant_db
+from app.schemas.provider import CreateProvider, ProviderResponse, UpdateProvider
 
 router = APIRouter(prefix="/providers", tags=["providers"])
 

@@ -9,8 +9,8 @@ from sqlalchemy import text
 from testcontainers.postgres import PostgresContainer
 
 from app.config import settings
-import database.session as db_session
-from database.bootstrap import setup_app_user
+import app.database.session as db_session
+from app.database.bootstrap import setup_app_user
 
 
 def _async_database_url(raw_url: str) -> str:

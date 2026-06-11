@@ -3,8 +3,8 @@ from uuid import UUID
 from sqlalchemy import delete, insert, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from models.lesson import Lesson
-from schemas.lesson import CreateLesson, UpdateLesson
+from app.models.lesson import Lesson
+from app.schemas.lesson import CreateLesson, UpdateLesson
 
 
 async def create_lesson(

@@ -8,7 +8,7 @@ echo "Running database migrations..."
 ADMIN_DATABASE_URL="$ADMIN_URL" alembic upgrade head
 
 echo "Ensuring application database role..."
-python -m database.bootstrap "$ADMIN_URL"
+python -m app.database.bootstrap "$ADMIN_URL"
 
 echo "Starting API on http://0.0.0.0:8000"
 echo "Open http://localhost:8000/docs for interactive API docs"

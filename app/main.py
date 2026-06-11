@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from routes import api_router
+from app.routes import api_router
 
 app = FastAPI(
     title="Course Service",

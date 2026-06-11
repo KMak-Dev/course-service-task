@@ -95,7 +95,7 @@ def setup_app_user(admin_url: str) -> str:
 def main() -> None:
     admin_url = sys.argv[1] if len(sys.argv) > 1 else os.environ.get("ADMIN_DATABASE_URL")
     if not admin_url:
-        raise SystemExit("Usage: python -m database.bootstrap <admin_database_url>")
+        raise SystemExit("Usage: python -m app.database.bootstrap <admin_database_url>")
 
     setup_app_user(admin_url)
 

@@ -8,11 +8,6 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 COPY pyproject.toml README.md .
 COPY app/ app/
-COPY models/ models/
-COPY database/ database/
-COPY routes/ routes/
-COPY schemas/ schemas/
-COPY crud/ crud/
 COPY alembic/ alembic/
 COPY alembic.ini .
 COPY scripts/docker-entrypoint.sh /entrypoint.sh

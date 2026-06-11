@@ -3,9 +3,9 @@ import uuid
 from sqlalchemy import delete, insert, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.session import set_provider_context
-from models.provider import Provider
-from schemas.provider import CreateProvider, UpdateProvider
+from app.database.session import set_provider_context
+from app.models.provider import Provider
+from app.schemas.provider import CreateProvider, UpdateProvider
 
 
 async def create_provider(db: AsyncSession, data: CreateProvider) -> Provider:
