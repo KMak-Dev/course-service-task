@@ -10,6 +10,12 @@ engine = create_async_engine(settings.database_url, pool_pre_ping=True)
 SessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 
+def configure_database(database_url: str) -> None:
+    global engine, SessionLocal
+    engine = create_async_engine(database_url, pool_pre_ping=True)
+    SessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+
+
 async def set_provider_context(session: AsyncSession, provider_id: uuid.UUID) -> None:
     await session.execute(
         text("SELECT set_config('app.current_provider_id', :provider_id, true)"),

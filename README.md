@@ -87,6 +87,15 @@ schemas/  → Pydantic request/response models
 
 Tenant isolation uses `provider_id` on all tenant-owned tables and PostgreSQL RLS policies keyed on session variable `app.current_provider_id`.
 
+## Tests
+
+Integration tests use [Testcontainers](https://testcontainers.com/) to start a temporary PostgreSQL 16 instance, run Alembic migrations, and exercise the API in-process via `httpx` (no separate server). **Docker must be running.**
+
+```bash
+pip install -e ".[dev]"
+pytest -v
+```
+
 ## Assumptions / out of scope
 
 - No authentication — `provider_id` in the URL stands in for future auth
