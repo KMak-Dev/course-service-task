@@ -20,7 +20,8 @@ services:
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: postgresql+psycopg://course:course@db:5432/course_service
+      ADMIN_DATABASE_URL: postgresql+psycopg://course:course@db:5432/course_service
+      DATABASE_URL: postgresql+psycopg://course_app:course@db:5432/course_service
     depends_on:
       db:
         condition: service_healthy
