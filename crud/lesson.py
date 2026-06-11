@@ -34,6 +34,17 @@ async def get_lesson_by_id(db: AsyncSession, lesson_id: UUID) -> Lesson | None:
     return result.scalar_one_or_none()
 
 
+async def get_lesson_by_id_and_chapter(
+    db: AsyncSession,
+    *,
+    lesson_id: UUID,
+    chapter_id: UUID,
+) -> Lesson | None:
+    stmt = select(Lesson).where(Lesson.id == lesson_id, Lesson.chapter_id == chapter_id)
+    result = await db.execute(stmt)
+    return result.scalar_one_or_none()
+
+
 async def list_lessons_by_chapter(db: AsyncSession, *, chapter_id: UUID) -> list[Lesson]:
     stmt = (
         select(Lesson)
