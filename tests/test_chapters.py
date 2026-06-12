@@ -3,7 +3,9 @@ from httpx import AsyncClient
 from tests.conftest import create_provider
 
 
-async def _create_course(client: AsyncClient, provider_id: str, title: str = "Course") -> str:
+async def _create_course(
+    client: AsyncClient, provider_id: str, title: str = "Course"
+) -> str:
     response = await client.post(
         f"/providers/{provider_id}/courses",
         json={"title": title},
@@ -63,4 +65,7 @@ async def test_chapter_cannot_be_own_ancestor(client: AsyncClient) -> None:
         json={"parent_id": child_id},
     )
     assert cycle_response.status_code == 400
-    assert cycle_response.json()["detail"] == "Chapter cannot be its own ancestor"
+    assert (
+        cycle_response.json()["detail"]
+        == "Chapter cannot be its own ancestor"
+    )

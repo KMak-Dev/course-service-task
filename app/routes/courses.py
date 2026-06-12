@@ -7,7 +7,9 @@ from app.crud import course as course_crud
 from app.database.session import get_tenant_db
 from app.schemas.course import CourseResponse, CreateCourse, UpdateCourse
 
-router = APIRouter(prefix="/providers/{provider_id}/courses", tags=["courses"])
+router = APIRouter(
+    prefix="/providers/{provider_id}/courses", tags=["courses"]
+)
 
 
 @router.get("", response_model=list[CourseResponse])
@@ -15,17 +17,23 @@ async def list_courses(
     provider_id: uuid.UUID,
     db: AsyncSession = Depends(get_tenant_db),
 ) -> list[CourseResponse]:
-    courses = await course_crud.list_courses_by_provider(db, provider_id=provider_id)
+    courses = await course_crud.list_courses_by_provider(
+        db, provider_id=provider_id
+    )
     return [CourseResponse.model_validate(course) for course in courses]
 
 
-@router.post("", response_model=CourseResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "", response_model=CourseResponse, status_code=status.HTTP_201_CREATED
+)
 async def create_course(
     provider_id: uuid.UUID,
     body: CreateCourse,
     db: AsyncSession = Depends(get_tenant_db),
 ) -> CourseResponse:
-    course = await course_crud.create_course(db, provider_id=provider_id, data=body)
+    course = await course_crud.create_course(
+        db, provider_id=provider_id, data=body
+    )
     await db.commit()
     return CourseResponse.model_validate(course)
 
@@ -38,7 +46,10 @@ async def get_course(
 ) -> CourseResponse:
     course = await course_crud.get_course_by_id(db, course_id)
     if course is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Course not found",
+        )
     return CourseResponse.model_validate(course)
 
 
@@ -51,7 +62,10 @@ async def update_course(
 ) -> CourseResponse:
     course = await course_crud.get_course_by_id(db, course_id)
     if course is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Course not found",
+        )
 
     course = await course_crud.update_course(db, course, body)
     await db.commit()
@@ -66,7 +80,10 @@ async def delete_course(
 ) -> Response:
     course = await course_crud.get_course_by_id(db, course_id)
     if course is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Course not found",
+        )
 
     await course_crud.delete_course(db, course)
     await db.commit()

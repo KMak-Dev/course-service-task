@@ -30,7 +30,9 @@ async def create_lesson_video(
     return result.scalar_one()
 
 
-async def get_lesson_video_by_id(db: AsyncSession, video_id: UUID) -> LessonVideo | None:
+async def get_lesson_video_by_id(
+    db: AsyncSession, video_id: UUID
+) -> LessonVideo | None:
     stmt = select(LessonVideo).where(LessonVideo.id == video_id)
     result = await db.execute(stmt)
     return result.scalar_one_or_none()
@@ -65,6 +67,8 @@ async def update_lesson_video(
     return result.scalar_one()
 
 
-async def delete_lesson_video(db: AsyncSession, video: LessonVideo) -> None:
+async def delete_lesson_video(
+    db: AsyncSession, video: LessonVideo
+) -> None:
     stmt = delete(LessonVideo).where(LessonVideo.id == video.id)
     await db.execute(stmt)

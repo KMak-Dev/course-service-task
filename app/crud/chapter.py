@@ -30,7 +30,9 @@ async def create_chapter(
     return result.scalar_one()
 
 
-async def get_chapter_by_id(db: AsyncSession, chapter_id: UUID) -> Chapter | None:
+async def get_chapter_by_id(
+    db: AsyncSession, chapter_id: UUID
+) -> Chapter | None:
     stmt = select(Chapter).where(Chapter.id == chapter_id)
     result = await db.execute(stmt)
     return result.scalar_one_or_none()
@@ -42,7 +44,9 @@ async def get_chapter_by_id_and_course(
     chapter_id: UUID,
     course_id: UUID,
 ) -> Chapter | None:
-    stmt = select(Chapter).where(Chapter.id == chapter_id, Chapter.course_id == course_id)
+    stmt = select(Chapter).where(
+        Chapter.id == chapter_id, Chapter.course_id == course_id
+    )
     result = await db.execute(stmt)
     return result.scalar_one_or_none()
 
@@ -84,7 +88,9 @@ async def list_chapters_by_course(
     return list(result.scalars().all())
 
 
-async def update_chapter(db: AsyncSession, chapter: Chapter, data: UpdateChapter) -> Chapter:
+async def update_chapter(
+    db: AsyncSession, chapter: Chapter, data: UpdateChapter
+) -> Chapter:
     updates = data.model_dump(exclude_unset=True)
     if not updates:
         return chapter

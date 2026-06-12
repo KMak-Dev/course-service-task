@@ -17,10 +17,15 @@ router = APIRouter(
 )
 
 
-async def _get_course_or_404(db: AsyncSession, course_id: uuid.UUID) -> None:
+async def _get_course_or_404(
+    db: AsyncSession, course_id: uuid.UUID
+) -> None:
     course = await course_crud.get_course_by_id(db, course_id)
     if course is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Course not found",
+        )
 
 
 async def _get_chapter_or_404(
@@ -35,7 +40,10 @@ async def _get_chapter_or_404(
         course_id=course_id,
     )
     if chapter is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chapter not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Chapter not found",
+        )
     return chapter
 
 
@@ -51,7 +59,10 @@ async def _get_lesson_or_404(
         chapter_id=chapter_id,
     )
     if lesson is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lesson not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Lesson not found",
+        )
     return lesson
 
 
@@ -63,13 +74,19 @@ async def list_lessons(
     db: AsyncSession = Depends(get_tenant_db),
 ) -> list[LessonResponse]:
     await _get_course_or_404(db, course_id)
-    await _get_chapter_or_404(db, course_id=course_id, chapter_id=chapter_id)
+    await _get_chapter_or_404(
+        db, course_id=course_id, chapter_id=chapter_id
+    )
 
-    lessons = await lesson_crud.list_lessons_by_chapter(db, chapter_id=chapter_id)
+    lessons = await lesson_crud.list_lessons_by_chapter(
+        db, chapter_id=chapter_id
+    )
     return [LessonResponse.model_validate(lesson) for lesson in lessons]
 
 
-@router.post("", response_model=LessonResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "", response_model=LessonResponse, status_code=status.HTTP_201_CREATED
+)
 async def create_lesson(
     provider_id: uuid.UUID,
     course_id: uuid.UUID,
@@ -78,7 +95,9 @@ async def create_lesson(
     db: AsyncSession = Depends(get_tenant_db),
 ) -> LessonResponse:
     await _get_course_or_404(db, course_id)
-    await _get_chapter_or_404(db, course_id=course_id, chapter_id=chapter_id)
+    await _get_chapter_or_404(
+        db, course_id=course_id, chapter_id=chapter_id
+    )
 
     lesson = await lesson_crud.create_lesson(
         db,
@@ -99,8 +118,12 @@ async def get_lesson(
     db: AsyncSession = Depends(get_tenant_db),
 ) -> LessonResponse:
     await _get_course_or_404(db, course_id)
-    await _get_chapter_or_404(db, course_id=course_id, chapter_id=chapter_id)
-    lesson = await _get_lesson_or_404(db, chapter_id=chapter_id, lesson_id=lesson_id)
+    await _get_chapter_or_404(
+        db, course_id=course_id, chapter_id=chapter_id
+    )
+    lesson = await _get_lesson_or_404(
+        db, chapter_id=chapter_id, lesson_id=lesson_id
+    )
     return LessonResponse.model_validate(lesson)
 
 
@@ -114,8 +137,12 @@ async def update_lesson(
     db: AsyncSession = Depends(get_tenant_db),
 ) -> LessonResponse:
     await _get_course_or_404(db, course_id)
-    await _get_chapter_or_404(db, course_id=course_id, chapter_id=chapter_id)
-    lesson = await _get_lesson_or_404(db, chapter_id=chapter_id, lesson_id=lesson_id)
+    await _get_chapter_or_404(
+        db, course_id=course_id, chapter_id=chapter_id
+    )
+    lesson = await _get_lesson_or_404(
+        db, chapter_id=chapter_id, lesson_id=lesson_id
+    )
 
     lesson = await lesson_crud.update_lesson(db, lesson, body)
     await db.commit()
@@ -131,8 +158,12 @@ async def delete_lesson(
     db: AsyncSession = Depends(get_tenant_db),
 ) -> Response:
     await _get_course_or_404(db, course_id)
-    await _get_chapter_or_404(db, course_id=course_id, chapter_id=chapter_id)
-    lesson = await _get_lesson_or_404(db, chapter_id=chapter_id, lesson_id=lesson_id)
+    await _get_chapter_or_404(
+        db, course_id=course_id, chapter_id=chapter_id
+    )
+    lesson = await _get_lesson_or_404(
+        db, chapter_id=chapter_id, lesson_id=lesson_id
+    )
 
     await lesson_crud.delete_lesson(db, lesson)
     await db.commit()

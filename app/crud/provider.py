@@ -8,7 +8,9 @@ from app.models.provider import Provider
 from app.schemas.provider import CreateProvider, UpdateProvider
 
 
-async def create_provider(db: AsyncSession, data: CreateProvider) -> Provider:
+async def create_provider(
+    db: AsyncSession, data: CreateProvider
+) -> Provider:
     provider_id = uuid.uuid4()
     await set_provider_context(db, provider_id)
 
@@ -27,7 +29,9 @@ async def list_providers(db: AsyncSession) -> list[Provider]:
     return list(result.scalars().all())
 
 
-async def get_provider_by_id(db: AsyncSession, provider_id: uuid.UUID) -> Provider | None:
+async def get_provider_by_id(
+    db: AsyncSession, provider_id: uuid.UUID
+) -> Provider | None:
     stmt = select(Provider).where(Provider.id == provider_id)
     result = await db.execute(stmt)
     return result.scalar_one_or_none()

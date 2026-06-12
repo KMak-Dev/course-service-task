@@ -28,13 +28,15 @@ app/database/  → Engine, Session-Dependencies, Bootstrap der App-Rolle
 
 **API-Struktur:** verschachtelte REST-Ressourcen unter `/providers/{provider_id}/…`, sodass die Mandantenzuordnung in jeder URL explizit ist. Keine Authentifizierungsschicht — `provider_id` im Pfad steht stellvertretend für ein zukünftiges Auth-Token.
 
+**Mandantenschlüssel:** jede Mandantentabelle hat `provider_id` mit **Fremdschlüssel auf `providers`** (Migration `003`). Die Spalte ist auf Kindzeilen denormalisiert, damit RLS-Policies einfach bleiben; es gibt keine zusätzliche Constraint, die z. B. `chapters.provider_id` mit der `provider_id` des Kurses abgleicht.
+
 ## Domänenmodell
 
 | Entität | Beziehungen | Anmerkungen |
 |---------|-------------|-------------|
 | **Provider** | besitzt viele Kurse | Mandanten-Wurzel |
 | **Course** | gehört zu einem Provider; hat viele Kapitel | `title`, `description` |
-| **Chapter** | gehört zu einem Kurs; **verschachtelbar** via `parent_id` | Hierarchie + `sort_order`; Zyklusverhinderung bei Updates |
+| **Chapter** | gehört zu einem Kurs; **verschachtelbar** via `parent_id` | `title`, `description`, `sort_order`; Zyklusverhinderung bei Updates |
 | **Lesson** | gehört zu einem Kapitel | `title`, `sort_order` |
 | **LessonVideo** | eines pro Lektion (1:1) | nur Metadaten — kein Upload/Streaming |
 
@@ -52,7 +54,7 @@ app/database/  → Engine, Session-Dependencies, Bootstrap der App-Rolle
 | Lessons | `…/chapters/{chapter_id}/lessons` | vollständiges CRUD |
 | Video-Metadaten | `…/lessons/{lesson_id}/video` | GET / POST / PATCH / DELETE (Singular-Ressource) |
 
-Interaktive Dokumentation: http://localhost:8000/docs
+Interaktive Docs (FastAPI Swagger UI): http://localhost:8000/docs
 
 ## Row Level Security (RLS)
 
@@ -77,7 +79,7 @@ In einem Multi-Tenant-System können Anwendungsfehler oder vergessene `WHERE`-Kl
 
 | Rolle | Zweck | RLS |
 |-------|-------|-----|
-| `course` | DB-Owner — nur Migrationen (`ADMIN_DATABASE_URL`) | umgeht RLS (Superuser) |
+| `course` | DB-Owner — nur Schema-Migrationen (`ADMIN_DATABASE_URL`); nicht zur Laufzeit | nur DDL; bei `FORCE RLS` würde DML Policies brauchen |
 | `course_app` | Anwendungslaufzeit (`DATABASE_URL`) | **erzwungen** (`NOBYPASSRLS`) |
 
 `app/database/bootstrap.py` legt `course_app` an und vergibt Tabellenrechte. Docker-Entrypoint und Tests nutzen dasselbe Setup, sodass **Laufzeitverhalten und Integrationstests übereinstimmen**.
@@ -104,25 +106,6 @@ docker compose down            # stoppen
 docker compose down -v         # stoppen und Datenbank-Volume löschen
 ```
 
-## Manueller API-Test (curl)
-
-```bash
-curl -s -X POST http://localhost:8000/providers \
-  -H "Content-Type: application/json" \
-  -d '{"name": "Provider A"}' | jq
-```
-
-```bash
-export PROVIDER_ID="<id-hier-einfügen>"
-
-curl -s http://localhost:8000/providers | jq
-curl -s http://localhost:8000/providers/$PROVIDER_ID | jq
-
-curl -s -X POST "http://localhost:8000/providers/$PROVIDER_ID/courses" \
-  -H "Content-Type: application/json" \
-  -d '{"title": "Mein Kurs"}' | jq
-```
-
 ## Lokale Entwicklung (API auf dem Host, DB in Docker)
 
 ```bash
@@ -142,10 +125,13 @@ uvicorn app.main:app --reload   # nutzt DATABASE_URL=course_app aus .env
 
 ## Tests
 
-Integrationstests nutzen [Testcontainers](https://testcontainers.com/), um eine temporäre PostgreSQL-16-Instanz zu starten, Migrationen als Admin auszuführen, `course_app` zu bootstrappen und die API in-process via `httpx` zu testen (kein separater Server). **Docker muss laufen.**
+Docker muss laufen (die Tests starten einen temporären Postgres-Container).
 
 ```bash
+python -m venv .venv
+source .venv/bin/activate
 pip install -e ".[dev]"
+
 pytest -v
 ```
 
@@ -156,28 +142,12 @@ pytest -v
 | `test_provider_cannot_access_other_providers_course` | Mandantenisolation auf Kursebene |
 | `test_provider_cannot_access_other_providers_lesson_video` | Mandantenisolation auf Lektions-/Videoebene |
 
-Nach jedem Test werden Mandantentabellen geleert, um Isolation innerhalb der Session sicherzustellen.
-
-## Abdeckung der Aufgabenanforderungen
-
-| Anforderung | Umsetzung |
-|-------------|-----------|
-| Multi-Tenancy via `provider_id` | Spalte auf allen Mandantentabellen + verschachtelte API-Pfade |
-| Trennung auf DB-Ebene | PostgreSQL RLS mit `FORCE`, Laufzeitrolle `course_app` |
-| Domänenmodell (Kurs, Kapitel, Lektion, Video) | `app/models/` + Alembic-Migrationen |
-| Verschachtelte Kapitel | `parent_id` Self-FK, Zyklusprüfung im CRUD |
-| Video-Metadaten-Felder | `LessonVideo`-Modell (`title`, `description`, `file_id`, `subtitle_text`) |
-| CRUD-API | `app/routes/` für alle Ressourcen |
-| Eingabevalidierung / Fehlerbehandlung | Pydantic-Schemas; 404, 400, 409, 422 |
-| 2–3 Tests | 4 Integrationstests in `tests/` |
-| README | diese Datei (engl.: [README_eng.md](README_eng.md)) |
-
 ## Annahmen / Vereinfachungen
 
 - **Keine Authentifizierung** — jeder Client kann beliebige `provider_id`-Werte in der URL übergeben; RLS erzwingt *Datenzugriff*, nicht die *Identität des Aufrufers*. Ein Request an `/providers/{provider_b}/…` setzt `app.current_provider_id` auf B, sodass Provider B nur die Zeilen von B sieht — unabhängig davon, welche IDs im Pfad stehen. In Produktion würde die Authentifizierung den Mandanten aus einem JWT oder einer Session ableiten und diese Session-Variable serverseitig setzen — der Pfad wäre nicht die Quelle der Wahrheit für die Mandantenzuordnung.
 - **Provider-Liste ist offen** — `GET /providers` liefert alle Provider (bewusst für Auffindbarkeit).
 - **Kein explizites `provider_id` in jeder CRUD-Abfrage** — Mandantenisolation verlässt sich auf RLS bei Verbindung als `course_app`.
-- **Denormalisiertes `provider_id` ohne tabellenübergreifende DB-Prüfungen** — jede mandantengebundene Zeile trägt `provider_id` für RLS-Policies. Es gibt keine Datenbank-Constraint, die z. B. sicherstellt, dass `chapters.provider_id` zur `provider_id` des übergeordneten Kurses passt; Konsistenz wird durch die Anwendung erzwungen (sie schreibt immer die `provider_id` aus dem Pfad) und durch RLS beim Lesen. Ein Trigger oder zusammengesetzter Fremdschlüssel könnte das in Produktion härten.
+- **Denormalisiertes `provider_id` ohne tabellenübergreifende DB-Prüfungen** — jede mandantengebundene Zeile trägt `provider_id` für RLS-Policies (mit FK auf `providers`). Es gibt keine Datenbank-Constraint, die z. B. sicherstellt, dass `chapters.provider_id` zur `provider_id` des übergeordneten Kurses passt; Konsistenz wird durch die Anwendung erzwungen (sie schreibt immer die `provider_id` aus dem Pfad) und durch RLS beim Lesen. Ein Trigger oder zusammengesetzter Fremdschlüssel könnte das in Produktion härten.
 - **Untertitel-Durchsuchbarkeit ist modelliert, nicht implementiert** — `subtitle_text` wird als PostgreSQL-`TEXT` (nicht `VARCHAR`) gespeichert, damit das Feld wachsen kann und sich später sauber auf Volltextsuche abbilden lässt (z. B. generierte `tsvector`-Spalte und GIN-Index). Kein Such-Endpunkt oder Index ist vorhanden; die Schema-Wahl ist der bewusste Ankerpunkt für ein zukünftiges Feature.
 - **Video-Metadaten haben keinen List-Endpunkt** — jede Lektion hat höchstens einen Video-Metadaten-Datensatz (1:1, erzwungen durch Unique-Constraint auf `lesson_id`). Die API exponiert eine Singular-Ressource unter `…/lessons/{lesson_id}/video` (GET / POST / PATCH / DELETE) statt einer Collection-URL, da eine Liste immer null oder ein Element zurückgeben würde.
 - **Video-`file_id`** ist eine undurchsichtige String-Referenz auf externen Speicher (nicht implementiert).
@@ -194,7 +164,7 @@ Nach jedem Test werden Mandantentabellen geleert, um Isolation innerhalb der Ses
 ## Projektstruktur
 
 ```
-app/           Anwendungspaket (Entry, Settings, Routes, CRUD, Models, Schemas, Database)
+app/           Anwendungspaket (entry, settings, routes, crud, models, schemas, database)
 alembic/       Schema-Migrationen (inkl. RLS-Policies)
 tests/         Integrationstests (Testcontainers)
 scripts/       Docker-Entrypoint

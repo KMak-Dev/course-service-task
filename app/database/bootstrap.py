@@ -14,7 +14,9 @@ APP_DB_PASSWORD = "course"
 
 def normalize_sync_url(url: str) -> str:
     if url.startswith("postgresql+psycopg2://"):
-        return url.replace("postgresql+psycopg2://", "postgresql+psycopg://", 1)
+        return url.replace(
+            "postgresql+psycopg2://", "postgresql+psycopg://", 1
+        )
     if url.startswith("postgresql://"):
         return url.replace("postgresql://", "postgresql+psycopg://", 1)
     return url
@@ -37,7 +39,9 @@ def build_async_url(
 
 def setup_app_user(admin_url: str) -> str:
     sync_admin_url = normalize_sync_url(admin_url)
-    parsed = urlparse(sync_admin_url.replace("postgresql+psycopg://", "postgresql://", 1))
+    parsed = urlparse(
+        sync_admin_url.replace("postgresql+psycopg://", "postgresql://", 1)
+    )
     database = parsed.path.lstrip("/")
     admin_user = parsed.username or "postgres"
     app_url = build_async_url(
@@ -49,19 +53,21 @@ def setup_app_user(admin_url: str) -> str:
     )
 
     with create_engine(sync_admin_url).connect() as conn:
-        conn.execute(
-            text(
-                f"""
+        conn.execute(text(f"""
                 DO $$ BEGIN
                   CREATE ROLE {APP_DB_USER} LOGIN PASSWORD '{APP_DB_PASSWORD}'
                     NOSUPERUSER NOBYPASSRLS;
                 EXCEPTION WHEN duplicate_object THEN NULL;
                 END $$;
-                """
+                """))
+        conn.execute(
+            text(
+                f'GRANT CONNECT ON DATABASE "{database}" TO {APP_DB_USER}'
             )
         )
-        conn.execute(text(f'GRANT CONNECT ON DATABASE "{database}" TO {APP_DB_USER}'))
-        conn.execute(text(f"GRANT USAGE ON SCHEMA public TO {APP_DB_USER}"))
+        conn.execute(
+            text(f"GRANT USAGE ON SCHEMA public TO {APP_DB_USER}")
+        )
         conn.execute(
             text(
                 f"GRANT SELECT, INSERT, UPDATE, DELETE, TRUNCATE "
@@ -69,33 +75,33 @@ def setup_app_user(admin_url: str) -> str:
             )
         )
         conn.execute(
-            text(f"GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO {APP_DB_USER}")
-        )
-        conn.execute(
             text(
-                f"""
+                f"GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO {APP_DB_USER}"
+            )
+        )
+        conn.execute(text(f"""
                 ALTER DEFAULT PRIVILEGES FOR ROLE {admin_user} IN SCHEMA public
                   GRANT SELECT, INSERT, UPDATE, DELETE, TRUNCATE ON TABLES TO {APP_DB_USER}
-                """
-            )
-        )
-        conn.execute(
-            text(
-                f"""
+                """))
+        conn.execute(text(f"""
                 ALTER DEFAULT PRIVILEGES FOR ROLE {admin_user} IN SCHEMA public
                   GRANT USAGE, SELECT ON SEQUENCES TO {APP_DB_USER}
-                """
-            )
-        )
+                """))
         conn.commit()
 
     return app_url
 
 
 def main() -> None:
-    admin_url = sys.argv[1] if len(sys.argv) > 1 else os.environ.get("ADMIN_DATABASE_URL")
+    admin_url = (
+        sys.argv[1]
+        if len(sys.argv) > 1
+        else os.environ.get("ADMIN_DATABASE_URL")
+    )
     if not admin_url:
-        raise SystemExit("Usage: python -m app.database.bootstrap <admin_database_url>")
+        raise SystemExit(
+            "Usage: python -m app.database.bootstrap <admin_database_url>"
+        )
 
     setup_app_user(admin_url)
 

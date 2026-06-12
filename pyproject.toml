@@ -21,6 +21,7 @@ dev = [
     "httpx>=0.27",
     "testcontainers[postgres]>=4.0",
     "ruff>=0.8",
+    "black>=24.0",
 ]
 
 [build-system]
@@ -34,6 +35,10 @@ packages = ["app"]
 testpaths = ["tests"]
 asyncio_mode = "auto"
 addopts = "-q"
+
+[tool.black]
+line-length = 75
+target-version = ["py311"]
 
 [tool.ruff]
 line-length = 100

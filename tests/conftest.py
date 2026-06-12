@@ -15,7 +15,9 @@ from app.database.bootstrap import setup_app_user
 
 def _async_database_url(raw_url: str) -> str:
     if raw_url.startswith("postgresql+psycopg2://"):
-        return raw_url.replace("postgresql+psycopg2://", "postgresql+psycopg://", 1)
+        return raw_url.replace(
+            "postgresql+psycopg2://", "postgresql+psycopg://", 1
+        )
     if raw_url.startswith("postgresql://"):
         return raw_url.replace("postgresql://", "postgresql+psycopg://", 1)
     return raw_url
@@ -60,11 +62,15 @@ async def client(database_url: str) -> AsyncIterator[AsyncClient]:
     from app.main import app
 
     transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as http_client:
+    async with AsyncClient(
+        transport=transport, base_url="http://test"
+    ) as http_client:
         yield http_client
 
 
-async def create_provider(client: AsyncClient, name: str = "Provider A") -> str:
+async def create_provider(
+    client: AsyncClient, name: str = "Provider A"
+) -> str:
     response = await client.post("/providers", json={"name": name})
     assert response.status_code == 201
     return response.json()["id"]

@@ -28,7 +28,9 @@ async def create_lesson(
     return result.scalar_one()
 
 
-async def get_lesson_by_id(db: AsyncSession, lesson_id: UUID) -> Lesson | None:
+async def get_lesson_by_id(
+    db: AsyncSession, lesson_id: UUID
+) -> Lesson | None:
     stmt = select(Lesson).where(Lesson.id == lesson_id)
     result = await db.execute(stmt)
     return result.scalar_one_or_none()
@@ -40,12 +42,16 @@ async def get_lesson_by_id_and_chapter(
     lesson_id: UUID,
     chapter_id: UUID,
 ) -> Lesson | None:
-    stmt = select(Lesson).where(Lesson.id == lesson_id, Lesson.chapter_id == chapter_id)
+    stmt = select(Lesson).where(
+        Lesson.id == lesson_id, Lesson.chapter_id == chapter_id
+    )
     result = await db.execute(stmt)
     return result.scalar_one_or_none()
 
 
-async def list_lessons_by_chapter(db: AsyncSession, *, chapter_id: UUID) -> list[Lesson]:
+async def list_lessons_by_chapter(
+    db: AsyncSession, *, chapter_id: UUID
+) -> list[Lesson]:
     stmt = (
         select(Lesson)
         .where(Lesson.chapter_id == chapter_id)
@@ -55,7 +61,9 @@ async def list_lessons_by_chapter(db: AsyncSession, *, chapter_id: UUID) -> list
     return list(result.scalars().all())
 
 
-async def update_lesson(db: AsyncSession, lesson: Lesson, data: UpdateLesson) -> Lesson:
+async def update_lesson(
+    db: AsyncSession, lesson: Lesson, data: UpdateLesson
+) -> Lesson:
     updates = data.model_dump(exclude_unset=True)
     if not updates:
         return lesson

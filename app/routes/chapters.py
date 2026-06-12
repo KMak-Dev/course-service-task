@@ -1,13 +1,24 @@
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    Query,
+    Response,
+    status,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.crud import chapter as chapter_crud
 from app.crud import course as course_crud
 from app.database.session import get_tenant_db
 from app.models.chapter import Chapter
-from app.schemas.chapter import ChapterResponse, CreateChapter, UpdateChapter
+from app.schemas.chapter import (
+    ChapterResponse,
+    CreateChapter,
+    UpdateChapter,
+)
 
 router = APIRouter(
     prefix="/providers/{provider_id}/courses/{course_id}/chapters",
@@ -15,10 +26,15 @@ router = APIRouter(
 )
 
 
-async def _get_course_or_404(db: AsyncSession, course_id: uuid.UUID) -> None:
+async def _get_course_or_404(
+    db: AsyncSession, course_id: uuid.UUID
+) -> None:
     course = await course_crud.get_course_by_id(db, course_id)
     if course is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Course not found",
+        )
 
 
 async def _get_chapter_or_404(
@@ -33,7 +49,10 @@ async def _get_chapter_or_404(
         course_id=course_id,
     )
     if chapter is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chapter not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Chapter not found",
+        )
     return chapter
 
 
@@ -49,7 +68,10 @@ async def _validate_parent(
         course_id=course_id,
     )
     if parent is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Parent chapter not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Parent chapter not found",
+        )
     return parent
 
 
@@ -70,7 +92,9 @@ async def list_chapters(
     await _get_course_or_404(db, course_id)
 
     if parent_id is not None:
-        await _validate_parent(db, course_id=course_id, parent_id=parent_id)
+        await _validate_parent(
+            db, course_id=course_id, parent_id=parent_id
+        )
 
     chapters = await chapter_crud.list_chapters_by_course(
         db,
@@ -78,10 +102,14 @@ async def list_chapters(
         parent_id=parent_id,
         roots_only=roots_only,
     )
-    return [ChapterResponse.model_validate(chapter) for chapter in chapters]
+    return [
+        ChapterResponse.model_validate(chapter) for chapter in chapters
+    ]
 
 
-@router.post("", response_model=ChapterResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "", response_model=ChapterResponse, status_code=status.HTTP_201_CREATED
+)
 async def create_chapter(
     provider_id: uuid.UUID,
     course_id: uuid.UUID,
@@ -91,7 +119,9 @@ async def create_chapter(
     await _get_course_or_404(db, course_id)
 
     if body.parent_id is not None:
-        await _validate_parent(db, course_id=course_id, parent_id=body.parent_id)
+        await _validate_parent(
+            db, course_id=course_id, parent_id=body.parent_id
+        )
 
     chapter = await chapter_crud.create_chapter(
         db,
@@ -111,7 +141,9 @@ async def get_chapter(
     db: AsyncSession = Depends(get_tenant_db),
 ) -> ChapterResponse:
     await _get_course_or_404(db, course_id)
-    chapter = await _get_chapter_or_404(db, course_id=course_id, chapter_id=chapter_id)
+    chapter = await _get_chapter_or_404(
+        db, course_id=course_id, chapter_id=chapter_id
+    )
     return ChapterResponse.model_validate(chapter)
 
 
@@ -124,12 +156,16 @@ async def update_chapter(
     db: AsyncSession = Depends(get_tenant_db),
 ) -> ChapterResponse:
     await _get_course_or_404(db, course_id)
-    chapter = await _get_chapter_or_404(db, course_id=course_id, chapter_id=chapter_id)
+    chapter = await _get_chapter_or_404(
+        db, course_id=course_id, chapter_id=chapter_id
+    )
 
     if "parent_id" in body.model_fields_set:
         new_parent_id = body.parent_id
         if new_parent_id is not None:
-            await _validate_parent(db, course_id=course_id, parent_id=new_parent_id)
+            await _validate_parent(
+                db, course_id=course_id, parent_id=new_parent_id
+            )
             if await chapter_crud.would_create_cycle(
                 db,
                 chapter_id=chapter_id,
@@ -153,7 +189,9 @@ async def delete_chapter(
     db: AsyncSession = Depends(get_tenant_db),
 ) -> Response:
     await _get_course_or_404(db, course_id)
-    chapter = await _get_chapter_or_404(db, course_id=course_id, chapter_id=chapter_id)
+    chapter = await _get_chapter_or_404(
+        db, course_id=course_id, chapter_id=chapter_id
+    )
 
     await chapter_crud.delete_chapter(db, chapter)
     await db.commit()

@@ -39,7 +39,9 @@ class Chapter(Base, TimestampMixin):
     )
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(Text)
-    sort_order: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
+    sort_order: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default=text("0")
+    )
 
     course: Mapped[Course] = relationship(back_populates="chapters")
     parent: Mapped[Chapter | None] = relationship(

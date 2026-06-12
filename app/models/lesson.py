@@ -33,7 +33,9 @@ class Lesson(Base, TimestampMixin):
         nullable=False,
     )
     title: Mapped[str] = mapped_column(String(255), nullable=False)
-    sort_order: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
+    sort_order: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default=text("0")
+    )
 
     chapter: Mapped[Chapter] = relationship(back_populates="lessons")
     video: Mapped[LessonVideo | None] = relationship(

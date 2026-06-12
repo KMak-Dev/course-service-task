@@ -35,6 +35,8 @@ class LessonVideo(Base, TimestampMixin):
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(Text)
     file_id: Mapped[str] = mapped_column(String(255), nullable=False)
-    subtitle_text: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("''"))
+    subtitle_text: Mapped[str] = mapped_column(
+        Text, nullable=False, server_default=text("''")
+    )
 
     lesson: Mapped[Lesson] = relationship(back_populates="video")
